@@ -3,6 +3,7 @@ import numpy as np
 
 from business.user import User
 
+movies_read =[] #已看过的电影集合
 rating = {}  # 初始化一个dict
 curId = 1
 user = User(1, '1', '1')  # 初始化的信息，但需要注意这里的
@@ -28,21 +29,28 @@ def readDataFromCsv(filePathName, userList):
 def extract(line, userList):
     userId, movieId, rate = line[0:-1]
     userId = int(userId)
-    global curId
-    global user
-    global rating
-    if userId is not curId:
-        user.rating = rating  # 赋值
-        userList.append(user)  # 清空dict 中的值
+    movieId = int(movieId)
+    global curId, user, rating, movies_read
+    if userId != curId:
+        # step 1.赋值
+        user.movies_read = movies_read
+        user.rating = rating
+        if rating: # 防止加入空用户
+            userList.append(user)  # 清空dict 中的值
+
+        # step 2.重置
         user = User(userId, str(userId), str(userId))  # 新建一个User
         curId = userId
         rating = {}
+        movies_read = [] #
+    movies_read.append(movieId)
     rating[int(movieId)] = float(rate)  # 转换为数字
 
 
 # 打印用户的评分情况
 def printUserRate(userList):
     for user in userList:
+        print("用户", user, "的评分情况如下：")
         for key, val in user.rating.items():  # 遍历
             print(key, "->", val, end="| ")
         print()
@@ -55,3 +63,12 @@ def getLenOfVector(dict):
         sum += (value * value)
     sum = np.sqrt(sum)
     return sum
+
+# 打印可供推荐的用户Id
+def printInfo(userList):
+    print("你可以使用的Userid 有：")
+    start = 10
+    end = 15
+    for i in userList[start:end]:
+        print(i,end =" ")
+    print()
