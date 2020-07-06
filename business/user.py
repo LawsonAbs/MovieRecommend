@@ -9,11 +9,11 @@ class User():
         self.id = id
         self.username = username
         self.password = pasword
-        self.rating={} # 评分
+        self.rateInfo={} # 评分信息。类似于{}
         self.simFriends = Q.PriorityQueue(11) # 相似好友的最大个数为10，但是存11个
         self.movies_read=[] # 已经看过的电影
-        self.movies_calc = {} # 正在计算中的电影
-#        self.movies_rec=Q.PriorityQueue(6) # 待推荐的5部电影
+        self.movies_calc = {} # 正在计算中的电影，存储形式是{movie:posibility}
+#       self.movies_rec=Q.PriorityQueue(6) # 待推荐的5部电影
 
     def __str__(self) -> str:
         return self.username

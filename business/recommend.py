@@ -17,8 +17,12 @@ def printRecom(user):
         print(i,end=" ")
 
 
-# 计算用户的推荐
-def calcRecom(user):
+"""
+计算用户的推荐
+01.使用UserCF算法
+02.TODO:应该去掉这个用户之前已经看过的电影集合
+"""
+def userCFRecom(user):
     # step 1.计算与用户user相似用户的相关电影
     while user.simFriends.qsize() > 0:  # 当队列不为空时
         cur = user.simFriends.get()
@@ -28,7 +32,7 @@ def calcRecom(user):
         # 遍历相似用户看过的电影集合
         for i in friend.movies_read:
             val = user.movies_calc.get(i,0) # 初始值
-            user.movies_calc[i] = val + (poss * friend.rating.get(i))
+            user.movies_calc[i] = val + (poss * friend.rateInfo.get(i))
 
     # step 2.将这些相关电影排序得到最后的输出
     user.movies_calc = sorted(user.movies_calc.items(),key=lambda x:x[1],reverse=True)
@@ -36,3 +40,10 @@ def calcRecom(user):
     print("为用户",user,"推荐的电影有：")
     for i in user.movies_calc[0:5]:
         print(i,end=" ")
+
+"""
+为用户推荐电影
+01.使用ItemCF 算法，为用户 user 进行推荐
+"""
+def itemCF(user):
+    pass
