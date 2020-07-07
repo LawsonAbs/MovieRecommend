@@ -60,7 +60,7 @@ def testItemCF():
         # rate[moviedId]是一个字典。 rate[movieId].items()则是得到许多个tuple，每个tuple里装的是与该电影的相似电影信息
         for info in rate[movieId].items():
             a,b = info[0:2]
-            if a in user.movies_read:
+            if a in user.movies_read: # 排除掉已经看过的电影
                 continue
             user.movies_calc.setdefault(a,0) # 设置为0
             val = user.movies_calc.get(a) # 获取其值
@@ -73,4 +73,3 @@ def testItemCF():
 
 if __name__ == '__main__':
     testItemCF()
-
