@@ -17,13 +17,6 @@ def cosSimiForUser(u1,u2):
     multi2 = lenA * lenB
 
     multi1 = 0 # 记录点乘的结果
-    # 计算向量的点乘
-    # maxKey1 = max(rate1.keys())  这行代码有bug，如果rate1为空集合，那么就会抛出一个 ValueError: max() arg is an empty sequence
-    # maxKey2 = max(rate2.keys())
-    # 下面这个计算方式可以优化  => 优化成下面这个计算方法
-    # for i in range(max(maxKey1,maxKey2)+1):
-    #     multi1 += (rate1.get(i,0)) * (rate2.get(i,0))
-
     key1 = list(rate1.keys()) # 转换成键列表
     key2 = list(rate2.keys())
     i = 0

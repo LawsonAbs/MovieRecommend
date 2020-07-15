@@ -30,15 +30,15 @@ def userCFRecom(user):
         poss = cur[0] # 其相似概率
 
         # 遍历相似用户看过的电影集合
-        for i in friend.movies_read:
-            val = user.movies_calc.get(i,0) # 初始值
-            user.movies_calc[i] = val + (poss * friend.rateInfo.get(i))
+        for i in friend.moviesRead:
+            val = user.moviesCalc.get(i,0) # 初始值
+            user.moviesCalc[i] = val + (poss * friend.rateInfo.get(i))
 
     # step 2.将这些相关电影排序得到最后的输出
-    user.movies_calc = sorted(user.movies_calc.items(),key=lambda x:x[1],reverse=True)
+    user.moviesCalc = sorted(user.moviesCalc.items(),key=lambda x:x[1],reverse=True)
 
     print("为用户",user,"推荐的电影有：")
-    for i in user.movies_calc[0:5]:
+    for i in user.moviesCalc[0:5]:
         print(i,end=" ")
 
 """
