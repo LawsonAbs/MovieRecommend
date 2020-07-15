@@ -4,7 +4,7 @@ import numpy as np
 from business.user import User
 from business.movie import Item
 
-movies_read =[] #已看过的电影集合
+moviesRead =[] #已看过的电影集合
 rating = {}  # 初始化一个dict，存储的是 {movie:rate}
 curUserId = 1
 user = User(1, '1', '1')  # 初始化的信息，但需要注意这里的
@@ -38,10 +38,10 @@ def userExtract(line, userList):
     userId, movieId, rate = line[0:-1]
     userId = int(userId)
     movieId = int(movieId)
-    global curUserId, user, rating, movies_read
+    global curUserId, user, rating, moviesRead
     if userId != curUserId:
         # step 1.赋值
-        user.movies_read = movies_read
+        user.moviesRead = moviesRead
         user.rateInfo = rating
         if rating: # 防止加入空用户
             userList.append(user)  # 清空dict 中的值
@@ -50,8 +50,8 @@ def userExtract(line, userList):
         user = User(userId, str(userId), str(userId))  # 新建一个User
         curUserId = userId
         rating = {}
-        movies_read = [] #
-    movies_read.append(movieId)
+        moviesRead = [] #
+    moviesRead.append(movieId)
     rating[int(movieId)] = float(rate)  # 转换为数字
 
 
@@ -107,4 +107,3 @@ def printInfo(userList):
 # 得到一个共现矩阵 => 理应不需要使用这个共现矩阵，因为这会导致矩阵过于庞大，还是使用有数便存的方式
 def getCooccMatrix():
     pass
-
