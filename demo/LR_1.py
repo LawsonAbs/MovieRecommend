@@ -101,7 +101,7 @@ with torch.no_grad(): # 使用不求导
     log_probs = model(bow_vector)   # 这是什么操作？ 为何实例也可以当做方法调用？
     print(log_probs)
 
-# Run on test data before we train, just to see a before-and-after
+# Run on demo data before we train, just to see a before-and-after
 print("-------before-----------")
 with torch.no_grad():
     for instance, label in test_data:
