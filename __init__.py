@@ -6,7 +6,7 @@ from business.movie import Item
 # 测试userCF 算法
 def testUserCF():
     userList = []  # 用于存放所有的User
-    ut.readFromCsvToUserData("/Users/gamidev/program/resources/ml-25m/example.csv", userList)
+    ut.readFromCsvToUserData("/Users/gamidev/program/resources/ml-25m/userCF_example.csv", userList)
     # ut.printUserRate(userList)
     # 得到用户的相似度 => 注意这里的循环遍历方式，因为想避开重复的相似度计算，所以不是朴素的双层for循环
     for i in range(len(userList)):
@@ -24,7 +24,7 @@ def testItemCF():
     itemDict = {} # 用于创建一个空字典。每个电影id为键，[(userid,rate)]为值
     itemList = [] # 用户放item 的实际对象
     userList = [] # 存放获取的所有user，存放的是User 类型
-    filePath = "/Users/gamidev/program/resources/ml-25m/exam.csv"
+    filePath = "/Users/gamidev/program/resources/ml-25m/itemCF_exam.csv"
     ut.readFromCsvToUserData(filePath,userList) #即使在itemCF的算法中，也必须要读取各个user的信息，所以需要调用这个方法
     ut.readFromCsvToItemData(filePath, itemDict)
 
@@ -71,5 +71,8 @@ def testItemCF():
     print("为用户%s推荐的电影有：" %user)
     print(res[0:6]) # 输出前5个推荐结果
 
+# 测试逻辑回归算法
+def testLogR():
+    pass
 if __name__ == '__main__':
     testItemCF()

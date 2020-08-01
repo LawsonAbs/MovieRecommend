@@ -1,6 +1,7 @@
 import csv
 import numpy as np
-
+import torch
+from torch.utils.data import DataLoader
 from business.user import User
 from business.movie import Item
 
@@ -107,3 +108,48 @@ def printInfo(userList):
 # 得到一个共现矩阵 => 理应不需要使用这个共现矩阵，因为这会导致矩阵过于庞大，还是使用有数便存的方式
 def getCooccMatrix():
     pass
+
+
+# part2.======== 下面的代码是为 LogRegression 读取文件并形成一个向量返回的 =====
+"""
+params
+    line:表示输入的行内容
+"""
+def extract(line):
+    temp = {}
+    line = line.split("|")
+    #print(line)
+    temp['id'],temp['age'],temp['gender'],temp['occ'] = line[0:-1] # 赋值id,age,gender,occ
+    return temp
+
+"""
+1.获取单个用户的特征数据
+para:读取的文件内容，从该些文件中(path)，获取用户的评分信息 + 电影信息 + 其它信息
+特征向量的格式是：x=【用户id，用户年龄，性别，职业，电影id，电影类别】
+针对数据：u.user => 19|40|M|librarian|02138
+数据说的是：userid=19，年龄是40，性别是Male=>0, librarian => 1[统一映射]
+因为需要针对这个人推荐，所以我这里找出他看过的电影以及评分记录：
+19     274     2       879539794
+也就是说，看过的电影id是274，
+特征向量就是 x = [19,40,0,1,274,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0]
+
+
+获取用户信息：
+25|39|M|engineer|55107   => user id | age | gender | occupation | zip code
+形成一个字典。{userId: {age;gender;occupation;zip_code;}}
+"""
+def getUserInfo(userInfoPath):
+    userInfo = {}  # 初始化一个字典，用于存储用户的信息
+    # 访问评分信息
+    with open(userInfoPath) as file:  # 这句话是什么意思 => 打开filePathName所指的那个文件，然后将其存储在文件对象file中
+        for line in file.readlines(): # 读取每行
+            line = line.strip("\n") # 去掉行末的换行符  => 这个意思是： 每行的行末都有一个换行符也被读出来了
+            # 为每个用户形成一个字典
+            temp = extract(line)
+            userInfo[temp['id']] = temp
+    print("=======用户字典如下========")
+    print(userInfo)
+"""
+1.从文件中获取数据放入Dataset中
+"""
+getUserInfo("/Users/gamidev/program/resources/ml-100k/u.user")
