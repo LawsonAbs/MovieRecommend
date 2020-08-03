@@ -20,9 +20,9 @@ import tools.util as ut
  
 """
 BATCH_SIZE = 5  # 批大小【每批的数据个数】
-rateFilePath = "/Users/gamidev/program/resources/ml-100k/u.data_exam"  # 用户评分数据
-userInfoPath = "/Users/gamidev/program/resources/ml-100k/u.user"  # 用户信息数据
-movieInfoPath = "/Users/gamidev/program/resources/ml-100k/u.item"  # 电影信息数据
+rateFilePath = "../data/ml-100k/u.data_exam"  # 用户评分数据
+userInfoPath = "../data/ml-100k/u.user"  # 用户信息数据
+movieInfoPath = "../data/ml-100k/u.item"  # 电影信息数据
 occupation2Id = {}  # the mapping occupation  to id
 
 """
