@@ -117,19 +117,20 @@ if __name__ == "__main__":
                               shuffle=False,
                               num_workers=1)
 
-    for _ in train_loader:
-        print(_)
+    # for _ in train_loader:
+    #     print(_)
     #print(type(train_loader))  # <class 'torch.utils.data.dataloader.DataLoader'>
 
     # ============ 开始训练 ============
     logr = LogR(24,1)  # 特征向量是24*1维
     # 定义损失函数 + 优化器
-    criterion = nn.BCELoss()
+    criterion = nn.BCELoss()  # 交叉熵函数作为计算损失
     optimizer = t.optim.SGD(logr.parameters(), lr=1e-3, momentum=0.9)
 
     # step3.开始训练
     # 每个epoch用的都是同一批数据进行训练
     for epoch in range(100):
+        print("========= epoch：",epoch+1,"=========")
         # enumerate
         for i, item in enumerate(train_loader):
             _da, label = item
@@ -147,7 +148,8 @@ if __name__ == "__main__":
             mask = out.ge(0.5).float()  # 以0.5为阈值进行分类
             correct = (mask == label).sum()  # 计算正确预测的样本个数
             acc = correct.item() / _da.size(0)  # 计算精度
-            print("acc = ",acc)
+            print("loss = ",loss,"acc=",acc)
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

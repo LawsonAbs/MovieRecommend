@@ -184,4 +184,4 @@ def getMovieInfo(movieInfoPath):
     return movieInfo
 
 
-print(getMovieInfo("/Users/gamidev/program/resources/ml-100k/u.item_exam"))
+#print(getMovieInfo("../data/ml-100k/u.item_exam"))
