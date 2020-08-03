@@ -115,12 +115,26 @@ def getCooccMatrix():
 params
     line:表示输入的行内容
 """
-def extract(line):
+def extractUserInfo(line):
     temp = {}
     line = line.split("|")
     #print(line)
     temp['id'],temp['age'],temp['gender'],temp['occ'] = line[0:-1] # 赋值id,age,gender,occ
     return temp
+
+
+"""
+fun：
+    获取评分信息
+params
+    line:表示输入的行内容
+returns:
+    返回结果是一个
+"""
+def extractRateInfo(line):
+    line = line.split()
+    return line
+
 
 """
 1.获取单个用户的特征数据
@@ -145,11 +159,29 @@ def getUserInfo(userInfoPath):
         for line in file.readlines(): # 读取每行
             line = line.strip("\n") # 去掉行末的换行符  => 这个意思是： 每行的行末都有一个换行符也被读出来了
             # 为每个用户形成一个字典
-            temp = extract(line)
+            temp = extractUserInfo(line)
             userInfo[temp['id']] = temp
-    print("=======用户字典如下========")
-    print(userInfo)
+    return userInfo
+    # print("=======用户字典如下========")
+    # print(userInfo)
 """
 1.从文件中获取数据放入Dataset中
 """
-getUserInfo("/Users/gamidev/program/resources/ml-100k/u.user")
+
+
+# 得到电影的数据
+def getMovieInfo(movieInfoPath):
+    movieInfo = {} # 电影字典
+    with open(movieInfoPath,encoding = "ISO-8859-1") as file:
+        for line in file.readlines():
+            temp = {}  # 临时一个字典
+            line = line.strip("\n")
+            line = line.split("|") # 得到电影的信息数据
+            temp['id'],temp['name'] = line[0] ,line[1]
+            # 把topic 转换成一个int  temp[topic]的大小是19
+            temp['topic'] =[int(_) for _ in  line[5:]]
+            movieInfo[int(line[0])] = temp
+    return movieInfo
+
+
+print(getMovieInfo("/Users/gamidev/program/resources/ml-100k/u.item_exam"))
