@@ -13,12 +13,18 @@
 ## 3.文件夹构成：
 ```
 MovieRecommend
+|--- __init__.py => 程序入口
+|
+|
 |----algorithms
 |    是常用算法包。在其中会实现常用的算法如UserCF, ItemCF, Logistic Regression 等  
-|
+|    |---logisticRegression.py=> 用于实现逻辑回归算法
+|    |---similarity.py        => 用于计算相似度的算法实现
+|    |---recommend.py         => UserCF/ItemCF 算法实现
 |
 |----business
-|
+|    |----movie.py            => 电影信息数据
+|    |----user.py             => 用户信息数据
 |
 |
 |----data
