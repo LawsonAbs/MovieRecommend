@@ -25,17 +25,21 @@ BATCH_SIZE = 5  # 批大小【每批的数据个数】
 rateFilePath = "../data/ml-100k/u1.base"  # 用户评分数据
 userInfoPath = "../data/ml-100k/u.user"  # 用户信息数据
 movieInfoPath = "../data/ml-100k/u.item"  # 电影信息数据
-modelPath = "../data/"
 occupation2Id = {}  # the mapping occupation  to id
+
+
+#初始化常量设置
+userInfo = ut.getUserInfo(userInfoPath)  # 得到用户的基本信息 => 事先处理好，形成一个字典
+movieInfo = ut.getMovieInfo(movieInfoPath)  # 得到电影的基本信息
 
 """
 特征数据集
 1.用于生成"用于训练的特征向量"
 """
 class FeatureDataset(Dataset):
-    def __init__(self,userRateFilePath):
+    def __init__(self,userRateFilePath,userInfo):
         if not os.path.isfile(userRateFilePath):
-            return ValueError(userRateFilePath,"is'n a file")
+            return ValueError(userRateFilePath,"isn't a file")
         self.filePath = userRateFilePath
 
         # 评分信息+用户信息+其它 得到的一个特征向量  =》 这里面报存的就是每条训练数据
@@ -54,7 +58,7 @@ class FeatureDataset(Dataset):
                     row = row.strip() # 去前后空格
                     rateInfo.append(int(row))
                 # movieInfo   # 得到电影的数据
-                singleUser = userInfo.get(str(rateInfo[0]))  # 得到电影的id 所对应的单个用户的特征信息
+                singleUser = self.userInfo.get(str(rateInfo[0]))  # 得到电影的id 所对应的单个用户的特征信息
                 age = int(singleUser['age']) # 年龄
                 gender = singleUser['gender'] # 性别
                 occ = singleUser['occ'] # 职业
@@ -79,7 +83,7 @@ class FeatureDataset(Dataset):
                 data.append(int(movieId))  # 追加了一个电影Id
                 for a in movieTopic:
                     data.append(a)  # 追加了一个topic序列
-                if rateInfo[2] >= 3:  # 如果是评分大于等于2，则标签为1
+                if rateInfo[2] >= 2:  # 如果是评分大于等于2，则标签为1 => 发现这个对训练的效果影响很大
                     self.label.append(1)  # 修改为1
                 else:
                     self.label.append(0)  # 返回为0
@@ -109,19 +113,13 @@ class LogR(nn.Module):  # 继承nn.Module
         x = self.sg(x)
         return x
 
-def train():
-    userInfo = ut.getUserInfo(userInfoPath)  # 得到用户的基本信息 => 事先处理好，形成一个字典
-    movieInfo = ut.getMovieInfo(movieInfoPath)  # 得到电影的基本信息
-    feature = FeatureDataset(rateFilePath)  # 获取特征向量
+def train(modelPath):
+    feature = FeatureDataset(rateFilePath,userInfo)  # 获取特征向量
     feature.loadData()  # 手动加载数据
     train_loader = DataLoader(feature,
                               batch_size=BATCH_SIZE,
                               shuffle=False,
                               num_workers=10)  # 如果值为0，则表示只用主进程加载数据
-
-    # for _ in train_loader:
-    #     print(_)
-    # print(type(train_loader))  # <class 'torch.utils.data.dataloader.DataLoader'>
 
     # ============ 开始训练 ============
     logr = LogR(24, 1)  # 特征向量是24*1维
@@ -132,7 +130,7 @@ def train():
 
     # step3.开始训练
     # 每个epoch用的都是同一批数据进行训练
-    for epoch in range(100):
+    for epoch in range(1):
         print("========= epoch：", epoch + 1, "=========")
         right = 0  # 记正确数
         # enumerate
@@ -175,9 +173,10 @@ if __name__ == "__main__":
         exit(0)
     # =========== 在训练集上训练 ===========
     elif sys.argv[1] == "test":
-        rateFilePath = sys.argv[1] # 拿到测试数据集
+        rateFilePath = sys.argv[2] # 拿到测试数据集
 
     # =========== 在测试集上进行测试 ============
     else:
-        rateFilePath = sys.argv[1] # 拿到训练数据
-        train()
+        rateFilePath = sys.argv[2] # 拿到训练数据
+        modelPath = "../data/"
+        train(modelPath)

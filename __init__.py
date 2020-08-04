@@ -1,4 +1,4 @@
-import tools.util as ut
+import tools.utils as ut
 from algorithms import similarity as sim
 from business import recommend as rec
 from business.movie import Item
