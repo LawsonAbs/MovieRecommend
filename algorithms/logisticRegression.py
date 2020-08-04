@@ -22,9 +22,11 @@ from tools import utils as ut
  ...
 """
 BATCH_SIZE = 5  # 批大小【每批的数据个数】
-rateFilePath = "../data/ml-100k/u1.base"  # 用户评分数据
-userInfoPath = "../data/ml-100k/u.user"  # 用户信息数据
-movieInfoPath = "../data/ml-100k/u.item"  # 电影信息数据
+
+# 推荐使用绝对路径，否则会在ide和命令行间产生错误
+rateFilePath = "/Users/gamidev/program/MovieRecommend/data/ml-100k/u1.base"  # 用户评分数据
+userInfoPath = "/Users/gamidev/program/MovieRecommend/data/ml-100k/u.user"  # 用户信息数据
+movieInfoPath = "/Users/gamidev/program/MovieRecommend/data/ml-100k/u.item"  # 电影信息数据
 occupation2Id = {}  # the mapping occupation  to id
 
 
@@ -178,5 +180,5 @@ if __name__ == "__main__":
     # =========== 在测试集上进行测试 ============
     else:
         rateFilePath = sys.argv[2] # 拿到训练数据
-        modelPath = "../data/"
+        modelPath = "/Users/gamidev/program/MovieRecommend/data/"
         train(modelPath)
