@@ -1,4 +1,4 @@
-from tools import util as ut
+from tools import utils as ut
 
 """
 01.使用两种不同的相似度计算方法

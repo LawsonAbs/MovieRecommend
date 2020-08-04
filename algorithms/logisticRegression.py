@@ -6,23 +6,26 @@
 02.开始逻辑回归的操作
 03.进行一波预测
 """
+import sys
+sys.path.append(r'.') # 将当前环境添加到系统环境中，用于给Python找包
+import datetime as dt  # 用于得到时间
 import torch as t
 from torch import nn
 import os
 from torch.utils.data import Dataset,DataLoader
-import tools.util as ut
+from tools import utils as ut
 
 """
 1.数据文件 u.data_exam 中有40行数据，其数据格式如下：
  ...
  32	301	98	4	882075827
  ...
- 
 """
 BATCH_SIZE = 5  # 批大小【每批的数据个数】
-rateFilePath = "../data/ml-100k/u.data_exam"  # 用户评分数据
+rateFilePath = "../data/ml-100k/u1.base"  # 用户评分数据
 userInfoPath = "../data/ml-100k/u.user"  # 用户信息数据
 movieInfoPath = "../data/ml-100k/u.item"  # 电影信息数据
+modelPath = "../data/"
 occupation2Id = {}  # the mapping occupation  to id
 
 """
@@ -76,7 +79,7 @@ class FeatureDataset(Dataset):
                 data.append(int(movieId))  # 追加了一个电影Id
                 for a in movieTopic:
                     data.append(a)  # 追加了一个topic序列
-                if rateInfo[2] >= 2:  # 如果是评分大于等于2，则标签为1
+                if rateInfo[2] >= 3:  # 如果是评分大于等于2，则标签为1
                     self.label.append(1)  # 修改为1
                 else:
                     self.label.append(0)  # 返回为0
@@ -105,9 +108,8 @@ class LogR(nn.Module):  # 继承nn.Module
         x = self.linR(x)
         x = self.sg(x)
         return x
-        
 
-if __name__ == "__main__":
+def train():
     userInfo = ut.getUserInfo(userInfoPath)  # 得到用户的基本信息 => 事先处理好，形成一个字典
     movieInfo = ut.getMovieInfo(movieInfoPath)  # 得到电影的基本信息
     feature = FeatureDataset(rateFilePath)  # 获取特征向量
@@ -115,41 +117,67 @@ if __name__ == "__main__":
     train_loader = DataLoader(feature,
                               batch_size=BATCH_SIZE,
                               shuffle=False,
-                              num_workers=1)
+                              num_workers=10)  # 如果值为0，则表示只用主进程加载数据
 
     # for _ in train_loader:
     #     print(_)
-    #print(type(train_loader))  # <class 'torch.utils.data.dataloader.DataLoader'>
+    # print(type(train_loader))  # <class 'torch.utils.data.dataloader.DataLoader'>
 
     # ============ 开始训练 ============
-    logr = LogR(24,1)  # 特征向量是24*1维
+    logr = LogR(24, 1)  # 特征向量是24*1维
     # 定义损失函数 + 优化器
     criterion = nn.BCELoss()  # 交叉熵函数作为计算损失
-    optimizer = t.optim.SGD(logr.parameters(), lr=1e-3, momentum=0.9)
+    # optimizer = t.optim.SGD(logr.parameters(), lr=1e-3, momentum=0.9) # 在本代码中使用SGD训练，效果不好
+    optimizer = t.optim.Adam(logr.parameters(), lr=1e-3)
 
     # step3.开始训练
     # 每个epoch用的都是同一批数据进行训练
     for epoch in range(100):
-        print("========= epoch：",epoch+1,"=========")
+        print("========= epoch：", epoch + 1, "=========")
+        right = 0  # 记正确数
         # enumerate
         for i, item in enumerate(train_loader):
             _da, label = item
-            # print(type(item)) # <class 'list'>
-            # print('data:', _da,end=",")
-            # print('label:', label)
             out = logr(_da)
             out = out.view(BATCH_SIZE)  # 要调整一下，才能跟后面的label进入到BCELoss()的部分
-            # print("out =",out)
-            # print(out.size())
-            # print("label = ",label)
+
             loss = criterion(out, label)  # 与分类标签做比较，求出损失
             # type(loss) =  <class 'torch.Tensor'> 这句代码的作用是将单个值的tensor 转为一个python中的数值
             print_loss = loss.data.item()
             mask = out.ge(0.5).float()  # 以0.5为阈值进行分类
             correct = (mask == label).sum()  # 计算正确预测的样本个数
+            right += correct.item()
             acc = correct.item() / _da.size(0)  # 计算精度
-            print("loss = ",loss,"acc=",acc)
+            # print("loss = ",loss,"acc=",acc)
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+        total = len(train_loader) * 5  # 记总数
+        print("acc = ", right / total)
+
+    curTime = dt.datetime.now()
+    curTime = curTime.strftime("%Y%d%m_%H%M%S")
+    modelPath = modelPath + curTime + ".abc"
+    t.save(logr.state_dict(), modelPath)  # 保存最后的训练模型
+
+
+# 测试
+def test():
+    pass
+
+if __name__ == "__main__":
+    print(len(sys.argv))
+    for _ in sys.argv:
+        print(_)
+    if len(sys.argv) <= 1:
+        print("参数不足")
+        exit(0)
+    # =========== 在训练集上训练 ===========
+    elif sys.argv[1] == "test":
+        rateFilePath = sys.argv[1] # 拿到测试数据集
+
+    # =========== 在测试集上进行测试 ============
+    else:
+        rateFilePath = sys.argv[1] # 拿到训练数据
+        train()
