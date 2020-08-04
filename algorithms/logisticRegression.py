@@ -8,10 +8,13 @@
 """
 import sys
 sys.path.append(r'.') # 将当前环境添加到系统环境中，用于给Python找包
+import os
+#os.environ["CUDA_VISIBLE_DEVICES"]="1"
+
 import datetime as dt  # 用于得到时间
 import torch as t
 from torch import nn
-import os
+
 from torch.utils.data import Dataset,DataLoader
 from tools import utils as ut
 
@@ -123,8 +126,17 @@ def train(modelPath):
                               shuffle=False,
                               num_workers=10)  # 如果值为0，则表示只用主进程加载数据
 
+    # ======= 判断是否可以用GPU 加速 ============
+    device = t.device("cuda:0" if t.cuda.is_available() else "cpu")
+    for k,v in train_loader:
+        if type(v) != list:   # 数据转到GPU上
+            v.to(device)
+
     # ============ 开始训练 ============
     logr = LogR(24, 1)  # 特征向量是24*1维
+    logr.to(device)
+
+
     # 定义损失函数 + 优化器
     criterion = nn.BCELoss()  # 交叉熵函数作为计算损失
     # optimizer = t.optim.SGD(logr.parameters(), lr=1e-3, momentum=0.9) # 在本代码中使用SGD训练，效果不好
