@@ -25,6 +25,8 @@ from tools import utils as ut
  ...
 """
 BATCH_SIZE = 5  # 批大小【每批的数据个数】
+EPOCH_TRAIN = 10
+EPOCH_TEST = 10
 
 # 推荐使用绝对路径，否则会在ide和命令行间产生错误
 rateFilePath = "/Users/gamidev/program/MovieRecommend/data/ml-100k/u1.base"  # 用户评分数据
@@ -69,7 +71,7 @@ class FeatureDataset(Dataset):
                 occ = singleUser['occ'] # 职业
                 #print (singleUser)
 
-                # ==== 调整用户数据 ====
+                # ==== 调整用户信息数据 ====
                 age = int(age)
                 gender = 0 if gender=='M' else 1 # 如果是男性，则是0；否则为1
                 if occ in occupation2Id.keys(): # 如果在其中
@@ -79,7 +81,7 @@ class FeatureDataset(Dataset):
                     occ = len(occupation2Id) - 1 # 一个新的职业
                 data = [rateInfo[0],age,gender,occ] # 拼接用户的数据成一个list
 
-                # ==== 调整电影的数据 ====
+                # ==== 调整电影信息数据 ====
                 singleMovie = movieInfo.get(rateInfo[1]) # 得到指定电影id的电影信息
                 movieId = singleMovie['id']
                 movieTopic = singleMovie['topic']
@@ -126,7 +128,8 @@ def train(modelPath):
                               shuffle=False,
                               num_workers=10)  # 如果值为0，则表示只用主进程加载数据
 
-    # ======= 判断是否可以用GPU 加速 ============
+    # 判断是否可以用GPU 加速 ============
+    # 注意这里  cuda:0 指的
     device = t.device("cuda:0" if t.cuda.is_available() else "cpu")
     for k,v in train_loader:
         if type(v) != list:   # 数据转到GPU上
@@ -134,38 +137,42 @@ def train(modelPath):
 
     # ============ 开始训练 ============
     logr = LogR(24, 1)  # 特征向量是24*1维
-    logr.to(device)
-
+    logr.to(device) # 模型放到cuda 上
 
     # 定义损失函数 + 优化器
     criterion = nn.BCELoss()  # 交叉熵函数作为计算损失
+    criterion.to(device)
     # optimizer = t.optim.SGD(logr.parameters(), lr=1e-3, momentum=0.9) # 在本代码中使用SGD训练，效果不好
-    optimizer = t.optim.Adam(logr.parameters(), lr=1e-3)
+    optimizer = t.optim.Adam(logr.parameters(), lr=1e-4)
 
     # step3.开始训练
     # 每个epoch用的都是同一批数据进行训练
-    for epoch in range(1):
-        print("========= epoch：", epoch + 1, "=========")
+    for epoch in range(20):
+        print("=========epoch：", epoch + 1, end = ",")
         right = 0  # 记正确数
         # enumerate
         for i, item in enumerate(train_loader):
+            # print(type(item), "++=====") <class 'list'>
             _da, label = item
+            # print("type(_da) === ",type(_da)) # <class 'torch.Tensor'>
+            _da.to(device) # 将数据放到指定的 device
+            label.to(device)
             out = logr(_da)
             out = out.view(BATCH_SIZE)  # 要调整一下，才能跟后面的label进入到BCELoss()的部分
-
+            out = out.to(device)  # 要将out 放到device  中，否则最后会有一个报错  => 在学院的gpu上，就发现这个才是最重要的！
             loss = criterion(out, label)  # 与分类标签做比较，求出损失
             # type(loss) =  <class 'torch.Tensor'> 这句代码的作用是将单个值的tensor 转为一个python中的数值
             print_loss = loss.data.item()
             mask = out.ge(0.5).float()  # 以0.5为阈值进行分类
             correct = (mask == label).sum()  # 计算正确预测的样本个数
             right += correct.item()
-            acc = correct.item() / _da.size(0)  # 计算精度
+            # acc = correct.item() / _da.size(0)  # 计算精度
             # print("loss = ",loss,"acc=",acc)
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        total = len(train_loader) * 5  # 记总数
+        total = len(train_loader) * BATCH_SIZE  # 记总数
         print("acc = ", right / total)
 
     curTime = dt.datetime.now()
@@ -174,23 +181,73 @@ def train(modelPath):
     t.save(logr.state_dict(), modelPath)  # 保存最后的训练模型
 
 
-# 测试
-def test():
-    pass
+# 模型测试部分
+def test(testRateFilePath,modelPath):
+    feature = FeatureDataset(testRateFilePath, userInfo)  # 获取特征向量
+    feature.loadData()  # 手动加载数据
+    test_loader = DataLoader(feature,
+                              batch_size=BATCH_SIZE,
+                              shuffle=False,
+                              num_workers=2)  # 如果值为0，则表示只用主进程加载数据
 
+    # ======= 判断是否可以用GPU 加速 ============
+    # 注意这里  cuda:0 指的
+    device = t.device("cuda:0" if t.cuda.is_available() else "cpu")
+    for k, v in test_loader:
+        if type(v) != list:  # 数据转到GPU上
+            v.to(device)
+
+    # ============ 开始训练 ============
+    logr = LogR(24, 1)  # 特征向量是24*1维
+    logr.to(device)  # 模型放到cuda 上
+    criterion = nn.BCELoss()
+    criterion.to(device)
+    logr.load_state_dict(t.load(modelPath))  # 保存最后的训练模型
+
+    right = 0  # 记正确数
+    for i, item in enumerate(test_loader):
+        _da, label = item
+        _da.to(device)  # 将数据放到指定的 device
+        label.to(device)
+        out = logr(_da)
+        out = out.view(BATCH_SIZE)  # 要调整一下，才能跟后面的label进入到BCELoss()的部分
+        out = out.to(device)  # 要将out 放到device  中，否则最后会有一个报错  => 在学院的gpu上，就发现这个才是最重要的！
+        loss = criterion(out, label)  # 与分类标签做比较，求出损失
+        print_loss = loss.data.item()
+        mask = out.ge(0.5).float()  # 以0.5为阈值进行分类
+        correct = (mask == label).sum()  # 计算正确预测的样本个数
+        right += correct.item()
+
+    total = len(test_loader) * BATCH_SIZE  # 记总数
+    print("acc = ", right / total)
+
+# 打印出配置信息
+def printConfig():
+    print("=====参数配置如下：================")
+    if sys.argv[1] == 'train':
+        print("当前执行的脚本文件是：", sys.argv[0])
+        print("训练数据：", sys.argv[2])
+        print("BATCH_SIZE =",BATCH_SIZE)  # =号后会自动跟一个空格
+        print("EPOCH_TRAIN =",EPOCH_TRAIN)
+    else:  # test
+        print("当前执行的脚本文件是：", sys.argv[0])
+        print("测试数据：", sys.argv[2])
+        print("BATCH_SIZE =", BATCH_SIZE)
+        print("EPOCH_TEST =", EPOCH_TEST)
+
+    print("=================================")
 if __name__ == "__main__":
-    print(len(sys.argv))
-    for _ in sys.argv:
-        print(_)
+    printConfig()
     if len(sys.argv) <= 1:
         print("参数不足")
         exit(0)
-    # =========== 在训练集上训练 ===========
+    # =========== 在训练集上测试 ===========
     elif sys.argv[1] == "test":
         rateFilePath = sys.argv[2] # 拿到测试数据集
-
-    # =========== 在测试集上进行测试 ============
+        modelPath = "/Users/gamidev/program/MovieRecommend/checkpoint/20200508_104227.abc"
+        test(rateFilePath,modelPath)
+    # =========== 在测试集上进行训练 ============
     else:
         rateFilePath = sys.argv[2] # 拿到训练数据
-        modelPath = "/Users/gamidev/program/MovieRecommend/data/"
+        modelPath = "/Users/gamidev/program/MovieRecommend/checkpoint/"
         train(modelPath)
