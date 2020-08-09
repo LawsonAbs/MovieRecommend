@@ -111,6 +111,7 @@ class LogR(nn.Module):  # 继承nn.Module
         super(LogR, self).__init__()  # 等价于调用 nn.Module.__init__(self)
         # 使用线性回归
         # 这里的24 的含义是：向量的维度是BATCH_SIZE * 24  => 最后只输出一个数，所以输出维度为1
+        # 套路就是：在__init__()方法中定义变量，获取类实例等等，然后再在forward()中调用
         self.linR = nn.Linear(in_features,out_features)
         self.sg = nn.Sigmoid()  # 输出之后执行sigmoid()函数
         
