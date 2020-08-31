@@ -17,6 +17,7 @@ from torch import nn
 
 from torch.utils.data import Dataset,DataLoader
 from tools import utils as ut
+import tools.printUtil  as pu
 
 """
 1.数据文件 u.data_exam 中有40行数据，其数据格式如下：
@@ -101,7 +102,8 @@ class FeatureDataset(Dataset):
 
     def __getitem__(self,idx):
         # 返回某条特征向量 + 标签向量
-        #return self.feature[idx], self.label[idx]  => 必须得返回tensor，否则是不可以的
+        # return self.feature[idx], self.label[idx]  => 必须得返回tensor，否则是不可以的
+        # 但是貌似有个问题：这里的self.feature 好像在运行之前就把数据加载了，有没有一种方法是在运行时返回数据？
         return t.tensor(self.feature[idx]).type(t.FloatTensor), t.tensor(self.label[idx]).type(t.FloatTensor)
 
 
@@ -122,12 +124,12 @@ class LogR(nn.Module):  # 继承nn.Module
         return x
 
 def train(modelPath):
-    feature = FeatureDataset(rateFilePath,userInfo)  # 获取特征向量
-    feature.loadData()  # 手动加载数据
-    train_loader = DataLoader(feature,
+    featureDs = FeatureDataset(rateFilePath,userInfo)  # 获取特征向量
+    featureDs.loadData()  # 手动加载数据
+    train_loader = DataLoader(featureDs,
                               batch_size=BATCH_SIZE,
                               shuffle=False,
-                              num_workers=10)  # 如果值为0，则表示只用主进程加载数据
+                              num_workers=0)  # 如果值为0，则表示只用主进程加载数据
 
     # 判断是否可以用GPU 加速 ============
     # 注意这里  cuda:0 指的
@@ -159,7 +161,13 @@ def train(modelPath):
             _da.to(device) # 将数据放到指定的 device
             label.to(device)
             out = logr(_da)
-            out = out.view(BATCH_SIZE)  # 要调整一下，才能跟后面的label进入到BCELoss()的部分
+            """
+            01.需要注意，这里并不是对BATCH_SIZE进行view，因为有的时候数据并不一定能整除BATCH_SIZE
+            但是能整除out.size(0)是肯定的
+            02.要调整一下，才能跟后面的label进入到BCELoss()的部分            
+            """
+            outSize = out.size(0)
+            out = out.view(outSize)
             out = out.to(device)  # 要将out 放到device  中，否则最后会有一个报错  => 在学院的gpu上，就发现这个才是最重要的！
             loss = criterion(out, label)  # 与分类标签做比较，求出损失
             # type(loss) =  <class 'torch.Tensor'> 这句代码的作用是将单个值的tensor 转为一个python中的数值
@@ -177,7 +185,7 @@ def train(modelPath):
         print("acc = ", right / total)
 
     curTime = dt.datetime.now()
-    curTime = curTime.strftime("%Y%d%m_%H%M%S")
+    curTime = curTime.strftime("%Y%m%d_%H%M%S")
     modelPath = modelPath + curTime + ".abc"
     t.save(logr.state_dict(), modelPath)  # 保存最后的训练模型
 
@@ -222,23 +230,12 @@ def test(testRateFilePath,modelPath):
     total = len(test_loader) * BATCH_SIZE  # 记总数
     print("acc = ", right / total)
 
-# 打印出配置信息
-def printConfig():
-    print("=====参数配置如下：================")
-    if sys.argv[1] == 'train':
-        print("当前执行的脚本文件是：", sys.argv[0])
-        print("训练数据：", sys.argv[2])
-        print("BATCH_SIZE =",BATCH_SIZE)  # =号后会自动跟一个空格
-        print("EPOCH_TRAIN =",EPOCH_TRAIN)
-    else:  # test
-        print("当前执行的脚本文件是：", sys.argv[0])
-        print("测试数据：", sys.argv[2])
-        print("BATCH_SIZE =", BATCH_SIZE)
-        print("EPOCH_TEST =", EPOCH_TEST)
+
 
     print("=================================")
 if __name__ == "__main__":
-    printConfig()
+    sys.argv.extend([BATCH_SIZE,EPOCH_TRAIN,EPOCH_TEST])
+    pu.printConfig(sys.argv)
     if len(sys.argv) <= 1:
         print("参数不足")
         exit(0)
