@@ -13,7 +13,7 @@
 ## 3.文件夹构成：
 ```
 MovieRecommend
-|--- __init__.py => 程序入口
+|--- __init__.py => 程序入口【暂未开启】
 |
 |
 |----algorithms
