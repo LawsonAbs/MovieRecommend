@@ -211,7 +211,7 @@ def test(testRateFilePath,modelPath):
     logr.to(device)  # 模型放到cuda 上
     criterion = nn.BCELoss()
     criterion.to(device)
-    logr.load_state_dict(t.load(modelPath))  # 保存最后的训练模型
+    logr.load_state_dict(t.load(modelPath))  # 加载训练好的模型
 
     right = 0  # 记正确数
     for i, item in enumerate(test_loader):
